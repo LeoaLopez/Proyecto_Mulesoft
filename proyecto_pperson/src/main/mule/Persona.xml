@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:validation="http://www.mulesoft.org/schema/mule/validation" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/validation http://www.mulesoft.org/schema/mule/validation/current/mule-validation.xsd">
+	<flow name="get:\personas:leolopez_ppersona-config">
+        <set-variable value='#[attributes.queryParams.promedio]' doc:name="variablePromedio" doc:id="675cc558-c46e-4145-a311-a8769a7138c2" variableName="variable"/>
+		<http:request method="GET" doc:name="GetPerson" doc:id="d0fbe04e-1c2f-4965-bd23-66b50bc02fb9" config-ref="HTTP_Request_configuration" path="/personas">
+			<http:query-params ><![CDATA[#[output application/java
+---
+{
+	promedio : attributes.queryParams.promedio
+}]]]></http:query-params>
+		</http:request>
+		<flow-ref doc:name="Flow Reference" doc:id="bcc1350b-bfa2-4369-8f07-630ce7d8f383" name="PersonaSub_Flow1"/>
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="b90a634a-fb47-4b7b-8cfc-48afbac2c667" type="ANY"/>
+		</error-handler>
+    
+</flow>
+    <sub-flow name="PersonaSub_Flow1" doc:id="67bde4c7-d408-4362-b819-84b6c65ac69c" >
+		<choice doc:name="Choice" doc:id="dfb57c34-893f-4ac5-a016-6822095bc820">
+			<when expression='#[vars.variable == "promedio"]'>
+				<ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd" doc:name="showAverageAge">
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+import * from dw::core::Arrays
+output application/json
+---
+{
+	'El promedio de edad es': ((payload.edad sumBy(if($>1)$ else 0))/(payload.edad countBy($>1))),
+	//'cantidad': payload.edad countBy($>1)
+}]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+			</when>
+			<when expression='#[vars.variable != "promedio"]'>
+				<ee:transform doc:name="showAllPersons" doc:id="4feefd9f-86f5-4fa4-8f03-c6f8eadda6ac">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</when>
+		</choice>
+	</sub-flow>
+	<flow name="delete:\personas:leolopez_ppersona-config">
+        <http:request method="DELETE" doc:name="DeletePerson" doc:id="4b6c9363-1411-4ec0-a536-f5cb5304497f" config-ref="HTTP_Request_configuration" path="/personas"/>
+		<ee:transform doc:name="confirmationMessageDeletePerson" doc:id="a4efbab6-3ea7-4ee1-a4ef-e516ae68cc05" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	Message: "Person delete successful"
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="6144820f-394b-479f-994b-0a328eeba66a" type="ANY"/>
+		</error-handler>
+    
+</flow>
+    <flow name="post:\personas:application\json:leolopez_ppersona-config">
+        <ee:transform doc:name="Transform Message" doc:id="26b2e6b2-6a91-41f6-b8af-1ad803fa6306" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload map(value,index)->{
+	'Nombre': value.Nombre,
+	'Apellido': value.Apellido,
+	'Dni': value.Dni,
+	'Email': value.Email,
+	'Edad': value.Edad,
+	'Genero': value.Genero
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<http:request method="POST" doc:name="PostPerson" doc:id="ae442b84-7e92-4c29-a060-621d3706eba3" config-ref="HTTP_Request_configuration" path="/personas"/>
+		<ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd" doc:name="confirmationMessageCreatedPerson">
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+  Message: "Created Persons"
+}]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="31223ba5-5cf4-40ee-bed0-b98962f55be9" type="ANY"/>
+		</error-handler>
+    
+</flow>
+    <flow name="get:\personas\(id):leolopez_ppersona-config">
+        <set-variable value="#[attributes.uriParams.id]" doc:name="VariableID" doc:id="934088c8-f95f-4ec4-9b92-2c6bf8523437" variableName="variableID"/>
+		<flow-ref doc:name="Flow Reference" doc:id="40a5d005-8184-4780-a65b-1f81a037c471" name="PersonaSub_Flow"/>
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="4a96826a-fed8-4820-bd30-5be7f7c4827d" type="ANY"/>
+		</error-handler>
+    
+</flow>
+    <sub-flow name="PersonaSub_Flow" doc:id="00016d6f-476a-45de-890a-bfe5442e101e" >
+		<http:request method="GET" doc:name="GetPersonById" doc:id="286febbc-9949-47f3-82bc-229c712b58cb" config-ref="HTTP_Request_configuration" path="/personas/{id}">
+			<http:uri-params><![CDATA[#[output application/java
+---
+{
+	id : vars.variableID
+}]]]></http:uri-params>
+		</http:request>
+		<set-variable value="#[sizeOf(payload)]" doc:name="variableSize" doc:id="09db89d2-d547-4884-85df-e1ed1d09e506" variableName="size" />
+		<choice doc:name="Choice" doc:id="d776b2b7-118f-449b-a100-9647b6c8b44b">
+			<when expression="#[vars.size==0]">
+				<ee:transform doc:name="personNotFoundById" doc:id="6e81533d-f715-4285-b739-6ddf9445ab18">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	Message:"No hay registro con ese ID"
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+			</when>
+			<when expression="#[vars.size !=0]">
+				<ee:transform doc:name="showPerson" doc:id="ac56b4ea-8367-4784-870e-52e4f6d45e4a">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</when>
+		</choice>
+	</sub-flow>
+	<flow name="patch:\personas:application\json:leolopez_ppersona-config">
+        <http:request method="PATCH" doc:name="PatchPerson" doc:id="d311b79d-ed50-49b1-b569-66247c91166a" config-ref="HTTP_Request_configuration" path="/personas"/>
+		<ee:transform doc:name="confirmationMessagePersonUpdate" doc:id="c203c2fa-954c-440f-a6e5-2b2dbbdd54ae" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	 Message: "Person Updated"
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="392b3fbd-224b-4788-8371-c30758a7b97c" type="ANY"/>
+		</error-handler>
+    
+</flow>
+</mule>

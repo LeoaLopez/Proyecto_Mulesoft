@@ -1,0 +1,103 @@
+#%RAML 1.0
+title: LeoLopez_pPersona
+types: 
+  PersonaNoID: !include Types/PersonaNoID.raml
+  
+/personas:
+ get:
+   queryParameters:
+     promedio?:
+       type: string
+       required: false
+   responses:
+     200:
+      body:
+        application/json:
+          type: object
+          example: !include Example/allPersons.raml
+     500:
+       body:
+          application/json:
+            example:
+              {
+                Message:"Internal Server Error"
+              } 
+ post:
+    body:
+      application/json:
+        type: PersonaNoID[]
+        examples:
+          input: !include Example/AddPerson.raml
+         
+    responses:
+      200:
+            body:
+                  application/json:
+                        example:
+                              {
+                                "Message": "Created Person"
+                              } 
+ delete:
+   description: "Se eliminara de la base de datos de forma permanente"
+   responses:
+     200:
+       body:
+        application/json:
+          example:
+            {
+              Message: "Person delete successful"
+            }
+     500:
+       body:
+        application/json:
+          example:
+            {
+              Message:"Internal Server Error"
+            }
+ patch:
+   body:
+     application/json:
+        properties:
+          Apellido:
+            type: string
+          Nombre:
+            type: string
+          Dni:
+            type: string
+          Email:
+            type: string
+          Edad:
+            type: integer
+          Genero:
+            type: string
+   responses:
+     200:
+       body:
+        application/json:
+          example:
+            {
+              Message: "Person Updated"
+            }
+     500:
+       body:
+         application/json:
+          example:
+            {
+              Message: "Internal Server Error"
+            }
+ 
+ /{id}:
+   get:
+      responses:
+        200:
+          body:
+            application/json:
+              example: !include Example/allPersons.raml
+                
+        500:
+          body:
+            application/json:
+              example:
+                {
+                  "message": "Internal server error"
+                }

@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd">
+	<flow name="get:\personas:leolopez_spersona-config">
+        <db:select doc:id="41e05d2b-f019-44e1-91b3-d56f0ab74626" config-ref="Database_Config" doc:name="AllPerson">
+			<db:sql ><![CDATA[SELECT id, nombre, apellido, dni, email, edad, genero FROM persona]]></db:sql>
+		</db:select>
+		<ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd" doc:name="Transform Message to json">
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="7ee7f7fe-1ff7-4ab0-b0f6-0e983d1a46dc" type="ANY"/>
+		</error-handler>
+    
+</flow>
+    <flow name="delete:\personas:leolopez_spersona-config">
+        <db:delete doc:name="PersonById" doc:id="8d11225c-bed6-4a59-823c-3e01e8315090" config-ref="Database_Config">
+			<db:sql ><![CDATA[DELETE FROM persona WHERE id=:id]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{'id': payload.id}]]]></db:input-parameters>
+		</db:delete>
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="fa0a06d5-89da-4a71-8f61-e06df1028084" type="ANY"/>
+		</error-handler>
+    
+</flow>
+    <flow name="post:\personas:application\json:leolopez_spersona-config">
+		<db:bulk-insert doc:name="AddPerson" doc:id="2fe6878e-caa2-436f-8a48-8e364925a4d4" config-ref="Database_Config">
+			<db:sql ><![CDATA[INSERT INTO persona (nombre, apellido, dni, email, edad, genero) VALUES(:Nombre,:Apellido,:Dni,:Email,:Edad,:Genero);]]></db:sql>
+		</db:bulk-insert>
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="4fec69c6-ce91-4223-92b8-588574f83fb2" type="ANY"/>
+		</error-handler>
+    
+</flow>
+    <flow name="get:\personas\(id):leolopez_spersona-config">
+        <db:select doc:name="PersonById" doc:id="df5918e9-c5ff-4eb7-a48d-a9473f10bb1f" config-ref="Database_Config">
+			<db:sql ><![CDATA[SELECT id, nombre, apellido, dni, email, edad, genero FROM persona WHERE id= :id;]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{'id': attributes.uriParams.id}]]]></db:input-parameters>
+		</db:select>
+        <ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd" doc:name="Transform Message to Json">
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="4f1cd58d-2577-469e-b942-d2e922756d93" type="ANY"/>
+		</error-handler>
+    
+</flow>
+    <flow name="patch:\personas:application\json:leolopez_spersona-config">
+        <db:update doc:name="PersonById" doc:id="ef128105-31a8-4064-b475-181f9226b556" config-ref="Database_Config">
+			<db:sql ><![CDATA[UPDATE persona SET nombre=:Nombre, apellido=:Apellido, dni=:Dni, email=:Email, edad=:Edad, genero=:Genero WHERE id=:id;]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{"Nombre":payload.Nombre,"Apellido":payload.Apellido,"Dni":payload.Dni,"Email":payload.Email,"Edad": payload.Edad,"Genero":payload.Genero,'id': payload.id}]]]></db:input-parameters>
+		</db:update>
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="3b4bca74-c924-498e-98b6-6183714284a4" type="ANY"/>
+		</error-handler>
+    
+</flow>
+</mule>
